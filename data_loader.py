@@ -32,7 +32,7 @@ class SRDataset(Dataset):
             transform_list.append(transforms.RandomHorizontalFlip())
 
         transform_list.append(transforms.ToTensor())
-        transform_list.append(transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5)))
+        transform_list.append(transforms.Normalize((0.5), (0.5)))
 
         img2tensor = transforms.Compose(transform_list)
 
@@ -40,9 +40,9 @@ class SRDataset(Dataset):
 
     def __getitem__(self, index):
         hr_path = self.img_list[index]
-        lr_path = self.lr_path + '/' + hr_path.split('/')[-1]
+        lr_path = self.lr_path + hr_path.split('/')[-2] + '/' + hr_path.split('/')[-1]
 
-        lr_img = Image.open(lr_path)
+        lr_img = Image.open(lr_path).convert('L')
         hr_img = Image.open(hr_path)
 
         # fix the seed for input and output
@@ -51,5 +51,5 @@ class SRDataset(Dataset):
         lr_img = self.img_trans(lr_img)
         random.seed(seed)
         hr_img = self.img_trans(hr_img)
-
+        # print("hr_img",hr_img.shape,"lr_img.shape",lr_img.shape)
         return {'LQ': lr_img, 'GT': hr_img}

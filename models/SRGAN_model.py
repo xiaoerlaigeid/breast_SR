@@ -127,7 +127,7 @@ class SRGANModel(BaseModel):
         self.optimizer_G.zero_grad()
         # ipdb.set_trace()
         self.fake_H = self.netG(self.var_L)
-
+        # print("self.fake_H",self.fake_H.shape)
         l_g_total = 0
         if step % self.D_update_ratio == 0 and step > self.D_init_iters:
             if self.cri_pix:  # pixel loss

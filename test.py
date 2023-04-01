@@ -1,4 +1,4 @@
-from dlib_alignment import dlib_detect_face, face_recover
+# from dlib_alignment import dlib_detect_face, face_recover
 import torch
 from PIL import Image
 import torchvision.transforms as transforms
@@ -6,10 +6,11 @@ from models.SRGAN_model import SRGANModel
 import numpy as np
 import argparse
 import utils
+import cv2
 
 _transform = transforms.Compose([transforms.ToTensor(),
-                                 transforms.Normalize(mean=[0.5, 0.5, 0.5],
-                                                      std=[0.5, 0.5, 0.5])])
+                                 transforms.Normalize(mean=[ 0.5],
+                                                      std=[ 0.5])])
 
 
 def get_FaceSR_opt():
@@ -47,8 +48,8 @@ def get_FaceSR_opt():
 
     # network G
     parser.add_argument('--which_model_G', type=str, default='RRDBNet')
-    parser.add_argument('--G_in_nc', type=int, default=3)
-    parser.add_argument('--out_nc', type=int, default=3)
+    parser.add_argument('--G_in_nc', type=int, default=1)
+    parser.add_argument('--out_nc', type=int, default=1)
     parser.add_argument('--G_nf', type=int, default=64)
     parser.add_argument('--nb', type=int, default=16)
 
@@ -58,7 +59,7 @@ def get_FaceSR_opt():
     parser.add_argument('--D_nf', type=int, default=64)
 
     # data dir
-    parser.add_argument('--pretrain_model_G', type=str, default='90000_G.pth')
+    parser.add_argument('--pretrain_model_G', type=str, default='check_points/ESRGAN-V1/latest_G.pth')
     parser.add_argument('--pretrain_model_D', type=str, default=None)
 
     args = parser.parse_args()
@@ -70,18 +71,28 @@ sr_model = SRGANModel(get_FaceSR_opt(), is_train=False)
 sr_model.load()
 
 def sr_forward(img, padding=0.5, moving=0.1):
-    img_aligned, M = dlib_detect_face(img, padding=padding, image_size=(128, 128), moving=moving)
-    input_img = torch.unsqueeze(_transform(Image.fromarray(img_aligned)), 0)
+    # img_aligned, M = dlib_detect_face(img, padding=padding, image_size=(128, 128), moving=moving)
+    input_img = torch.unsqueeze(_transform(img), 0)
     sr_model.var_L = input_img.to(sr_model.device)
     sr_model.test()
     output_img = sr_model.fake_H.squeeze(0).cpu().numpy()
     output_img = np.clip((np.transpose(output_img, (1, 2, 0)) / 2.0 + 0.5) * 255.0, 0, 255).astype(np.uint8)
-    rec_img = face_recover(output_img, M * 4, img)
-    return output_img, rec_img
+    # rec_img = face_recover(output_img, M * 4, img)
+    return output_img
 
-img_path = 'input.jpg'
-img = utils.read_cv2_img(img_path)
-output_img, rec_img = sr_forward(img)
-utils.save_image(output_img, 'output_face.jpg')
-utils.save_image(rec_img, 'output_img.jpg')
-
+for i in range(1000):
+    img_path = 'save_imgs/' + str(i) + '.png'
+    # img = utils.read_cv2_img(img_path)
+    img = Image.open(img_path).convert('L')
+    # img = torch.from_numpy(img).cuda()
+    output_img  = sr_forward(img)
+    output_img = np.squeeze(output_img)
+    sr_image=cv2.resize(output_img,(512,512),cv2.INTER_CUBIC)
+    inter_image = cv2.resize(np.array(img),(512,512),cv2.INTER_CUBIC)
+    sr_img_path = 'transformed_sr/' + str(i) + '.png'
+    inter_img_path = 'transformed_inter/' + str(i) + '.png'
+    print("========================",i,"========================")
+    print("output_img.shape",output_img.shape)
+    print("inter_image.shape",inter_image.shape)
+    utils.save_image(sr_image, sr_img_path)
+    utils.save_image(inter_image, inter_img_path)

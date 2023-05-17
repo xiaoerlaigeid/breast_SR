@@ -50,3 +50,8 @@ transformed_inter/
 transformed_sr/
 check_points/
 output_face.png
+*.zip
+stylegan*
+ddg*
+save_image*
+save_img*

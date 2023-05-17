@@ -10,11 +10,10 @@ from models.SRGAN_model import SRGANModel
 
 
 def main():
-    #### options
     parser = argparse.ArgumentParser()
     parser.add_argument('--gpu_ids', type=str, default='0')
-    parser.add_argument('--batch_size', type=int, default=4)
-    parser.add_argument('--dev_ratio', type=float, default=0.01)
+    parser.add_argument('--batch_size', type=int, default=2)
+    parser.add_argument('--dev_ratio', type=float, default=0.001)
     parser.add_argument('--lr_G', type=float, default=1e-4)
     parser.add_argument('--weight_decay_G', type=float, default=0)
     parser.add_argument('--beta1_G', type=float, default=0.9)
@@ -24,7 +23,7 @@ def main():
     parser.add_argument('--beta1_D', type=float, default=0.9)
     parser.add_argument('--beta2_D', type=float, default=0.99)
     parser.add_argument('--lr_scheme', type=str, default='MultiStepLR')
-    parser.add_argument('--niter', type=int, default=100000)
+    parser.add_argument('--niter', type=int, default=200000)
     parser.add_argument('--warmup_iter', type=int, default=-1)
     parser.add_argument('--lr_steps', type=list, default=[50000])
     parser.add_argument('--lr_gamma', type=float, default=0.5)
@@ -40,7 +39,7 @@ def main():
     parser.add_argument('--val_freq', type=int, default=1000)
     parser.add_argument('--save_freq', type=int, default=5000)
     parser.add_argument('--crop_size', type=float, default=0.85)
-    parser.add_argument('--lr_size', type=int, default=128)
+    parser.add_argument('--lr_size', type=int, default=256)
     parser.add_argument('--hr_size', type=int, default=512)
 
     # network G
@@ -57,16 +56,15 @@ def main():
 
     # data dir
     parser.add_argument('--hr_path', type=str, default='/home/Data/breast_gen_data/challenge_data/')
-    parser.add_argument('--lr_path', type=str, default='/home/Data/breast_gen_data/lr-128/')
-    parser.add_argument('--checkpoint_dir', type=str, default='check_points/ESRGAN-V1/')
+    parser.add_argument('--lr_path', type=str, default='/home/Data/breast_gen_data/lr-256/')
+    parser.add_argument('--checkpoint_dir', type=str, default='check_points/ESRGAN-V1_256/')
     parser.add_argument('--val_dir', type=str, default='dev_show')
-    parser.add_argument('--training_state', type=str, default='check_points/ESRGAN-V1/state/')
+    parser.add_argument('--training_state', type=str, default='check_points/ESRGAN-V1_256/state/')
 
     # resume the training
     parser.add_argument('--resume_state', type=str, default=None)
     parser.add_argument('--pretrain_model_G', type=str, default=None)
     parser.add_argument('--pretrain_model_D', type=str, default=None)
-
     parser.add_argument('--setting_file', type=str, default='setting.txt')
     parser.add_argument('--log_file', type=str, default='log.txt')
     args = check_args(parser.parse_args())
@@ -87,7 +85,6 @@ def main():
     for root, dirs, files in os.walk(args.hr_path, topdown=False):
         for name in files:
             total_img_list.append(os.path.join(root, name))
-
 
     random.shuffle(total_img_list)
     dev_list = total_img_list[:int(len(total_img_list) * args.dev_ratio)]

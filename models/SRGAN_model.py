@@ -7,6 +7,7 @@ import models.networks as networks
 import models.lr_scheduler as lr_scheduler
 from .base_model import BaseModel
 from models.modules.loss import GANLoss
+from torchsummary import summary
 
 
 logger = logging.getLogger('base')
@@ -20,11 +21,14 @@ class SRGANModel(BaseModel):
 
         # define networks and load pretrained models
         self.netG = networks.define_G(opt).to(self.device)
+        print("======================self.netG=================")
+        # summary(self.netG,(1,256,256))
         self.netG = DataParallel(self.netG)
         if self.is_train:
             self.netD = networks.define_D(opt).to(self.device)
+            print("======================self.netD=================")
+            # summary(self.netD,(1,512,512))            
             self.netD = DataParallel(self.netD)
-
             self.netG.train()
             self.netD.train()
 
@@ -108,17 +112,18 @@ class SRGANModel(BaseModel):
                 raise NotImplementedError('MultiStepLR learning rate scheme is enough.')
 
             self.log_dict = OrderedDict()
-
         self.print_network()  # print network
         # self.load()  # load G and D if needed
 
     def feed_data(self, data, need_GT=True):
         self.var_L = data['LQ'].to(self.device)  # LQ
+        # print("self.var_L.shape",self.var_L.shape)
         if need_GT:
             self.var_H = data['GT'].to(self.device)  # GT
             input_ref = data['ref'] if 'ref' in data else data['GT']
             self.var_ref = input_ref.to(self.device)
-
+            # print("self.var_ref.shape",self.var_ref.shape,"self.var_H.shape",self.var_H.shape)
+            
     def optimize_parameters(self, step):
         # G
         for p in self.netD.parameters():

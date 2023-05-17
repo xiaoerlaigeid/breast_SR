@@ -12,10 +12,10 @@ all_list = []
 for root, dirs, files in os.walk(root_dir, topdown=False):
     for name in files:
         all_list.append(os.path.join(root, name))
-target_size = 128
+target_size = 256
 # there are 3 quality ranges for each img
 quality_ranges = [(15, 75)]
-output_path = '/home/Data/breast_gen_data/lr-128'
+output_path = '/home/Data/breast_gen_data/lr-256'
 
 
 def saving(path):
@@ -40,8 +40,7 @@ def saving(path):
 with tqdm(total=len(all_list), desc='Resizing images') as pbar:
     def callback(req, x):
         pbar.update()
-
-    t_pool = ThreadPool(10)
+    t_pool = ThreadPool(15)
     requests = makeRequests(saving, all_list, callback=callback)
     for req in requests:
         t_pool.putRequest(req)

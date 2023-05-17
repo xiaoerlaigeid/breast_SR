@@ -1,6 +1,7 @@
 import torch
 import logging
 import models.modules.discriminator_vgg_arch as SRGAN_arch
+import models.modules.resnext as RESNEXT
 import models.modules.RRDBNet_arch as RRDBNet_arch
 
 logger = logging.getLogger('base')
@@ -13,7 +14,6 @@ logger = logging.getLogger('base')
 def define_G(opt):
     opt_net = opt
     which_model = opt_net.which_model_G
-
     if which_model == 'RRDBNet':
         netG = RRDBNet_arch.RRDBNet(in_nc=opt_net.G_in_nc, out_nc=opt_net.out_nc,
                                     nf=opt_net.G_nf, nb=opt_net.nb)
@@ -29,6 +29,8 @@ def define_D(opt):
 
     if which_model == 'discriminator_vgg_128':
         netD = SRGAN_arch.Discriminator_VGG_128(in_nc=opt_net.D_in_nc, nf=opt_net.D_nf)
+    elif which_model == 'discriminator_resnext_152':
+        netD = RESNEXT.resnext101(in_nc=opt_net.D_in_nc)
     else:
         raise NotImplementedError('Discriminator model [{:s}] not recognized'.format(which_model))
     return netD

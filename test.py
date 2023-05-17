@@ -7,6 +7,7 @@ import numpy as np
 import argparse
 import utils
 import cv2
+import os
 
 _transform = transforms.Compose([transforms.ToTensor(),
                                  transforms.Normalize(mean=[ 0.5],
@@ -59,16 +60,22 @@ def get_FaceSR_opt():
     parser.add_argument('--D_nf', type=int, default=64)
 
     # data dir
-    parser.add_argument('--pretrain_model_G', type=str, default='check_points/ESRGAN-V1/latest_G.pth')
+    parser.add_argument('--pretrain_model_G', type=str, default='check_points/ESRGAN-V2_256/latest_G.pth')
     parser.add_argument('--pretrain_model_D', type=str, default=None)
+    parser.add_argument('--data_path', type=str, default='/home/zhikai/save_imgs_stylegan_1w_256')
 
     args = parser.parse_args()
-
     return args
 
 
 sr_model = SRGANModel(get_FaceSR_opt(), is_train=False)
 sr_model.load()
+# sr_model = SRGANModel(get_FaceSR_opt(), is_train=True)
+# sr_model.load()
+
+print("total parameters G",sum(p.numel() for p in sr_model.netG.parameters()))
+# print("total parameters D",sum(p.numel() for p in sr_model.netD.parameters()))
+
 
 def sr_forward(img, padding=0.5, moving=0.1):
     # img_aligned, M = dlib_detect_face(img, padding=padding, image_size=(128, 128), moving=moving)
@@ -80,17 +87,34 @@ def sr_forward(img, padding=0.5, moving=0.1):
     # rec_img = face_recover(output_img, M * 4, img)
     return output_img
 
-for i in range(1000):
-    img_path = 'save_imgs/' + str(i) + '.png'
+
+# path = 'save_imgs/'
+args = get_FaceSR_opt()
+path = args.data_path
+model_name= path.split("/")[-1]
+# model_name  ="save_image_99_1w_256"
+path = path  + "/"
+for i in range(10000):
+    img_path =  path + str(i) + '.png'
     # img = utils.read_cv2_img(img_path)
     img = Image.open(img_path).convert('L')
+    # img = cv2.resize(np.array(img),(128,128),cv2.INTER_CUBIC)
     # img = torch.from_numpy(img).cuda()
     output_img  = sr_forward(img)
     output_img = np.squeeze(output_img)
-    sr_image=cv2.resize(output_img,(512,512),cv2.INTER_CUBIC)
+    if output_img.shape[0] !=512:
+        sr_image=cv2.resize(output_img,(512,512),cv2.INTER_CUBIC)
+    else:
+        sr_image = output_img
     inter_image = cv2.resize(np.array(img),(512,512),cv2.INTER_CUBIC)
-    sr_img_path = 'transformed_sr/' + str(i) + '.png'
-    inter_img_path = 'transformed_inter/' + str(i) + '.png'
+    sr_img_path = model_name + "_" + 'transformed_sr/' 
+    inter_img_path = model_name + "_" + 'transformed_inter/'    
+    if not os.path.exists(sr_img_path):
+        os.mkdir(sr_img_path)
+    if not os.path.exists(inter_img_path):
+        os.mkdir(inter_img_path)
+    sr_img_path = sr_img_path + str(i) + '.png'
+    inter_img_path = inter_img_path + str(i) + '.png'
     print("========================",i,"========================")
     print("output_img.shape",output_img.shape)
     print("inter_image.shape",inter_image.shape)
